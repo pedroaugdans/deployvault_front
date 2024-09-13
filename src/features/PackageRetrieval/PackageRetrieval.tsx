@@ -1,22 +1,36 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Tooltip, OverlayTrigger } from "react-bootstrap";
-import { GrantedPackage } from "../../redux/slices/packageSlice";
 import { CaosSpinner } from "../../components/CaOSSpinner/CaosSpinner";
-import { DataTable } from "primereact/datatable";
-import usePackageRetrieval from "./usePackageRetrieval";
+import {
+  DataTable,
+  DataTableExpandedRows,
+  DataTableValueArray,
+} from "primereact/datatable";
 import { Column } from "primereact/column";
 import { formatDate } from "../../util/dateHelpers/dateHelpers";
+import useGrantedPackages, { GrantedPackage } from "./useGrantedPackages";
 
 const PackageRetrieval: React.FC = () => {
-  const { expandedRows, setExpandedRows, loading, sharedPackages, copied, setCopied, handleCopy } = usePackageRetrieval();
+  const [expandedRows, setExpandedRows] = useState<
+    DataTableExpandedRows | DataTableValueArray | undefined
+  >(undefined);
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const content = false ? (
+  const { packages, isLoading } = useGrantedPackages();
+
+  const handleCopy = (repo: string) => {
+    navigator.clipboard.writeText(`pip install ${repo}`);
+    setCopied(repo);
+    setTimeout(() => setCopied(null), 1500); // Reset after 1.5 seconds
+  };
+
+  return isLoading ? (
     <CaosSpinner />
   ) : (
     <div className="card">
       <DataTable
-        loading={loading}
-        value={sharedPackages}
+        loading={isLoading}
+        value={packages}
         paginator
         rows={10}
         rowsPerPageOptions={[5, 10, 25, 50]}
@@ -27,13 +41,35 @@ const PackageRetrieval: React.FC = () => {
         <Column field="package_name" header="Name" sortable></Column>
         <Column field="size" header="Size" sortable></Column>
         <Column field="version" header="Version"></Column>
-        <Column field="public" header="Accessibility" body={(row: GrantedPackage) => (row.public ? "Public" : "Private")} sortable></Column>
-        <Column field="created_at" header="Upload Date" body={(row: GrantedPackage) => formatDate(row.created_at)} sortable></Column>
+        <Column
+          field="public"
+          header="Accessibility"
+          body={(row: GrantedPackage) => (row.public ? "Public" : "Private")}
+          sortable
+        ></Column>
+        <Column
+          field="created_at"
+          header="Upload Date"
+          body={(row: GrantedPackage) => formatDate(row.created_at)}
+          sortable
+        ></Column>
         <Column field="description" header="Description"></Column>
         <Column
           body={(row: GrantedPackage) => (
-            <OverlayTrigger placement="right" overlay={<Tooltip>{copied === row.package_name ? "Copied!" : "Copy"}</Tooltip>}>
-              <Button onClick={() => handleCopy(row.package_name)} variant="secondary" className="ml-2" style={{ width: "75px" }}>
+            <OverlayTrigger
+              placement="right"
+              overlay={
+                <Tooltip>
+                  {copied === row.package_name ? "Copied!" : "Copy"}
+                </Tooltip>
+              }
+            >
+              <Button
+                onClick={() => handleCopy(row.package_name)}
+                variant="secondary"
+                className="ml-2"
+                style={{ width: "75px" }}
+              >
                 {copied === row.package_name ? "Copied!" : "Copy"}
               </Button>
             </OverlayTrigger>
@@ -42,8 +78,6 @@ const PackageRetrieval: React.FC = () => {
       </DataTable>
     </div>
   );
-
-  return content;
 };
 
 export default PackageRetrieval;

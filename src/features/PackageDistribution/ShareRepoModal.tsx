@@ -1,33 +1,39 @@
-import React from "react";
 import { Modal, Button, Form } from "react-bootstrap";
-import { useAppSelector } from "../../redux/hooks";
-import { selectIsLoading } from "../../redux/slices/uiSlice";
-import { CaosSpinner } from "../../components/CaOSSpinner/CaosSpinner";
+import { UploadedPackage } from "./useUploadedPackages";
+import { useState } from "react";
 
-interface ShareRepoModalProps {
+type ShareRepoModalProps = {
   show: boolean;
   onHide: () => void;
-  onShare: (email: string) => void;
-  nameToShare: string;
-  setTargetName: (nameToShare: string) => void;
-  selectedRepo: any;
-}
+  onShare: (username: string) => void;
+  selectedPackage: UploadedPackage | null;
+};
 
-const ShareRepoModal: React.FC<ShareRepoModalProps> = ({ show, onHide, onShare, nameToShare, setTargetName, selectedRepo }) => {
-  const isLoading = useAppSelector(selectIsLoading);
+export default function ShareRepoModal({
+  show,
+  onHide,
+  onShare,
+  selectedPackage,
+}: ShareRepoModalProps) {
+  const [username, setUsername] = useState<string>("");
 
-  const content = isLoading ? (
-    <CaosSpinner />
-  ) : (
-    <Modal show={show} onHide={onHide}>
+  return (
+    <Modal show={show} onShow={() => setUsername("")} onHide={onHide}>
       <Modal.Header closeButton>
-        <Modal.Title>Share Repository {selectedRepo?.package_name}1</Modal.Title>
+        <Modal.Title>
+          Share Repository {selectedPackage?.package_name}1
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
           <Form.Group controlId="formEmail">
             <Form.Label>User Name</Form.Label>
-            <Form.Control type="email" placeholder="Enter target user name" value={nameToShare} onChange={(e) => setTargetName(e.target.value)} />
+            <Form.Control
+              type="text"
+              placeholder="Enter target user name"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </Form.Group>
         </Form>
       </Modal.Body>
@@ -35,13 +41,10 @@ const ShareRepoModal: React.FC<ShareRepoModalProps> = ({ show, onHide, onShare, 
         <Button variant="secondary" onClick={onHide}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={() => onShare(nameToShare)}>
+        <Button variant="primary" onClick={() => onShare(username)}>
           Share
         </Button>
       </Modal.Footer>
     </Modal>
   );
-  return content;
-};
-
-export default ShareRepoModal;
+}

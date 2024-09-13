@@ -1,11 +1,9 @@
-import { useFormik } from "formik";
+import { FormikHelpers, useFormik } from "formik";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loginSchema, registerSchema } from "../../util/validationSchema";
-import { useLoginMutation, useSignupMutation } from "../../redux/services/authService";
-import { useAppSelector } from "../../redux/hooks";
-import { selectIsLoading } from "../../redux/slices/uiSlice";
+import useAuth from "../../auth/useAuth";
 
-interface InitialState {
+interface FormState {
   email: string;
   password: string;
   username: string;
@@ -19,10 +17,11 @@ interface InitialState {
 export const useAuthForm = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [login] = useLoginMutation();
-  const [register] = useSignupMutation();
-  const isLoading = useAppSelector(selectIsLoading);
-  const initialState: InitialState = pathname === "auth" ? {username: "", email: "", password: "" } : { username: "", email: "", password: "" };
+  const { login, register } = useAuth();
+  const initialState: FormState =
+    pathname === "auth"
+      ? { username: "", email: "", password: "" }
+      : { username: "", email: "", password: "" };
 
   /**
    * Handles the form submission.
@@ -30,12 +29,14 @@ export const useAuthForm = () => {
    * @param values - The form values.
    * @param setSubmitting - A function to set the submitting state.
    */
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
+  const handleSubmit = async (
+    values: FormState,
+    { setSubmitting }: FormikHelpers<FormState>,
+  ) => {
     if (pathname === "/auth") {
-      await login({ email: values.email, password: values.password });
+      await login(values.email, values.password);
     } else {
-      
-      await register({username: values.username, email: values.email, password: values.password });
+      await register(values.username, values.email, values.password);
     }
     navigate("/home");
     setSubmitting(false);
@@ -46,5 +47,5 @@ export const useAuthForm = () => {
     validationSchema: pathname === "/auth" ? loginSchema : registerSchema,
     onSubmit: handleSubmit,
   });
-  return { formik, pathname, isLoading };
+  return { formik, pathname };
 };
